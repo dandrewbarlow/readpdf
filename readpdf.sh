@@ -10,9 +10,13 @@ OPTIND=1
 # initialize empty file vars
 input_file=""
 output_file=false
+convert=false
+voice='Tom'
 
 # list of temporary files
 temp_files=( )
+temp_text=""
+temp_audio=""
 
 # function to clean up temp files
 cleanup() {
@@ -34,9 +38,14 @@ usage() {
 
 
 # parse options
-# options: -o -h -i
+# options: -o -h -i -c
+# o : output- flag, not arg; create file with base filename, and write audio to it
+# h : help- display usage info
+# i : input- argument, specify input file
+# v : voice- specify voice
+# c : convert- flag, if present, convert to mp3
 
-while getopts "ohi:" opt; do
+while getopts "ohci:v:" opt; do
 	case $opt in
 		h)
 			usage
@@ -54,6 +63,17 @@ while getopts "ohi:" opt; do
 		o)
 			output_file=true
 			;;
+		c)
+			convert=true
+			if [ "$output_file" != true ]
+			then
+				echo "Can\'t convert without output"
+				exit 1
+			fi
+			;;
+		v)
+			voice="$OPTARG"
+			;;
 		*)
 			usage
 			exit 1
@@ -67,18 +87,40 @@ then
 	# extract the name of the file without extension
 	name=$(echo "$input_file" | cut -f 1 -d '.')
 
+	# create temporary files if they are desired
 
 	temp_text="$(mktemp -t ${name}.txt)"
 	tempfiles+=( "$temp_text" )
+
+	if [ "$convert" = true ]
+	then 
+		temp_audio="$(mktemp -t ${name}.aiff)"
+		tempfiles+=( "$temp_audio" )
+	fi
+
+	# convert pdf to txt
+	echo "> converting pdf"
+	gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
 
 	# if output is true create one, else do it in place
 	# having trouble using pipes, so txt middle man might be necessary evil
 	if [ "$output_file" = true ]
 	then
-		gs -q -dNOPROMPT -dNOPAUSE -dBATCH -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
-		say -v 'Tom' -f "$temp_text" -o "${name}.aiff"
+		echo "> generating audio"
+		if [ "$convert" = true ] 
+		then
+			say -v 'Tom' -f "$temp_text" -o "$temp_audio"
+			# get the bitrate of output file and use that for equivalent conversion
+			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
+			echo "> converting audio"
+			ffmpeg -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "${name}.mp3"
+		else
+			say -v 'Tom' -f "$temp_text" -o "${name}.aiff"
+		fi
+
+
 	else
-		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+		echo "> starting narration"
 		say -v 'Tom' -f "$temp_text"
 	fi
 
