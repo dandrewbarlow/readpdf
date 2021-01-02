@@ -11,28 +11,18 @@ OPTIND=1
 input_file=""
 output_file=false
 
-# options: -o -h
-parseOptions() {
-	while getopts "ohi:" opt; do
-		case $opt in
-			h)
-				usage
-				exit
-				;;
-			i)
-				echo "INPUT TRIG"
-				input_file="$OPTARG"
-				;;
-			o)
-				output_file=true
-				;;
-			*)
-				usage
-				exit
-				;;
-		esac
-	done
+# list of temporary files
+temp_files=( )
+
+# function to clean up temp files
+cleanup() {
+  rm -f "${tempfiles[@]}"
 }
+
+# bind cleanup function to exit, incl. interrupt
+trap cleanup EXIT
+trap cleanup SIGINT
+
 
 usage() {
 	echo "readpdf- use OSX's native text-to-speech programs to read pdf text"
@@ -42,27 +32,56 @@ usage() {
 	echo "requirements: getopt"
 }
 
-parseOptions
+
+# parse options
+# options: -o -h -i
+
+while getopts "ohi:" opt; do
+	case $opt in
+		h)
+			usage
+			exit 1
+			;;
+		i)
+			if [ -e "$OPTARG" ]
+			then
+				input_file="$OPTARG"
+			else
+				echo "Error: file \"${OPTARG}\" does not exist"
+				exit 1
+			fi
+			;;
+		o)
+			output_file=true
+			;;
+		*)
+			usage
+			exit 1
+			;;
+	esac
+done
 
 # check if the input file is specified and extant
 if [ "$input_file" != "" ] && [ -e "$input_file" ]
 then
 	# extract the name of the file without extension
-	name=$(echo "$filename" | cut -f 1 -d '.')
+	name=$(echo "$input_file" | cut -f 1 -d '.')
 
-	# use ghostscript to convert pdf to text file
-	gs -sDEVICE=txtwrite -o "${name}.txt" input_file
+
+	temp_text="$(mktemp -t ${name}.txt)"
+	tempfiles+=( "$temp_text" )
 
 	# if output is true create one, else do it in place
+	# having trouble using pipes, so txt middle man might be necessary evil
 	if [ "$output_file" = true ]
 	then
-		say -v 'Tom' "${name}.txt" -f "${name}.aiff"
+		gs -q -dNOPROMPT -dNOPAUSE -dBATCH -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+		say -v 'Tom' -f "$temp_text" -o "${name}.aiff"
 	else
-		say -v 'Tom' "${name}.txt" 
+		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+		say -v 'Tom' -f "$temp_text"
 	fi
 
-	# remove the temporary text file
-	rm "${name}.txt"
 else
 	echo "Error: no input file specified"
 	echo "" 
