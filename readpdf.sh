@@ -31,7 +31,8 @@ trap cleanup EXIT
 trap cleanup SIGINT
 
 requirements() {
-	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v ffmpeg)" ];
+	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v ffmpeg)" ]
+	then
 		echo "Error: requirements not met"
 		echo "More info: https://github.com/dandrewbarlow/readpdf"
 		exit 1
