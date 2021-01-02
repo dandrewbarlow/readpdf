@@ -1,4 +1,6 @@
 #! /bin/bash
+
+# readpdf - narrate a pdf file with native osx tts utility
 # written by Andrew Barlow
 # https://github.com/dandrewbarlow
 # https://a-barlow.com
@@ -28,6 +30,14 @@ cleanup() {
 trap cleanup EXIT
 trap cleanup SIGINT
 
+requirements() {
+	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v ffmpeg)" ];
+		echo "Error: requirements not met"
+		echo "More info: https://github.com/dandrewbarlow/readpdf"
+		exit 1
+	fi
+		
+}
 
 usage() {
 	echo "readpdf- use OSX's native text-to-speech programs to read pdf text"
@@ -41,6 +51,8 @@ usage() {
 
 }
 
+# check requirements
+requirements
 
 # parse options
 # options: -o -h -i -c
