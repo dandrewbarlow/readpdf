@@ -30,10 +30,14 @@ trap cleanup SIGINT
 
 usage() {
 	echo "readpdf- use OSX's native text-to-speech programs to read pdf text"
-	echo "USAGE: readpdf -i[o] [pdf]"
-	echo "-o flag sets output to true, which creates .aiff file with input's filename"
-	echo "use -h or make a mistake to see this menu"
-	echo "requirements: getopt"
+	echo "USAGE: ./readpdf.sh -i [input] -v [voice] [-och]"
+	echo "options: -i -o -c -h"
+    echo "i (argument) input - specify input file"
+    echo "o (flag) output - if provided, outputs to input.aiff"
+    echo "c (flag) convert - convert to mp3 using ffmpeg"
+    echo "v (argument) voice - specify voice to use. Defaults to Tom. No real error checking here, just passing it on to say so check what's available."
+	echo "for more information, visit https://github.com/dandrewbarlow/readpdf"
+
 }
 
 
