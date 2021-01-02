@@ -20,7 +20,8 @@ temp_audio=""
 
 # function to clean up temp files
 cleanup() {
-  rm -f "${tempfiles[@]}"
+	echo "> cleaning up temporary files"
+  	rm -f "${tempfiles[@]}"
 }
 
 # bind cleanup function to exit, incl. interrupt
@@ -117,7 +118,7 @@ then
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
 			echo "> converting audio"
-			ffmpeg -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "${name}.mp3"
+			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "${name}.mp3"
 		else
 			say -v 'Tom' -f "$temp_text" -o "${name}.aiff"
 		fi
