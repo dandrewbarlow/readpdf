@@ -1,14 +1,15 @@
 # readpdf by [Andrew Barlow](https://github.com/dandrewbarlow)
-Narrate pdf files from the command line
+Narrate pdf (and epub) files from the command line
 
 ### Description
-A simple script to take a pdf and narrate it.
+A simple script to take a pdf and narrate it. 
 
 This was written on and for my OSX computer, using OSX's native `say` command as a text to speech device. It also uses ghostscript with OSX syntax. All of which is to say it probably *can* work on other OSes, but it might require some tinkering.
 
 Fair warning that this is not *professional* grade software, just a script I made for fun. It still has problems, and comes with no warranty or guarantee of any kind.
 ### Requirements
 * Ghostscript - available from [homebrew](https://brew.sh/): `$ brew install ghostscript`
+* pandoc - allows conversion from `epub` format as well
 * ffmpeg - available for download from [here](http://ffmpeg.org/download.html) or again via homebrew: `brew install ffmpeg`. Default audio output for `say` is .aiff, and I for one would like a nice mp3 file
 * say - included in OSX, replacement needed for other OS's
 

@@ -126,7 +126,8 @@ then
 	then
 		pandoc "$input_file" -f epub -t plain -o "$temp_text"
 	else
-		echo "Error: Unsupported Format"
+		echo "Unsupported filetype, attempting implicit pandoc conversion"
+		pandoc "$input_file" -t plain -o "$temp_text"
 		exit 1
 	fi
 
