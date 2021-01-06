@@ -127,8 +127,13 @@ then
 		pandoc "$input_file" -f epub -t plain -o "$temp_text"
 	else
 		echo "Unsupported filetype, attempting implicit pandoc conversion"
-		pandoc "$input_file" -t plain -o "$temp_text"
-		exit 1
+		
+		# if implicit conversion succeeds, this command will return an empty string
+		# if if does not return a zero type (-z), then exit the script
+		if [ ! -z "$(pandoc ${input_file} -t plain -o ${temp_text})" ]
+		then
+			exit 1
+		fi
 	fi
 
 	# if output is true create one, else do it in place
