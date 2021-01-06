@@ -15,15 +15,15 @@ output_file=false
 convert=false
 voice='Tom'
 
-# list of temporary files
-temp_files=( )
+# temporary file directory and files
+temp_dir=""
 temp_text=""
 temp_audio=""
 
 # function to clean up temp files
 cleanup() {
 	echo "> cleaning up temporary files"
-  	rm -f "${tempfiles[@]}"
+  	rm -rf "${temp_dir}"
 }
 
 # bind cleanup function to exit, incl. interrupt
@@ -31,7 +31,7 @@ trap cleanup EXIT
 trap cleanup SIGINT
 
 requirements() {
-	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v ffmpeg)" ]
+	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v pandoc)" ] [ ! -x "$(command -v ffmpeg)" ]
 	then
 		echo "Error: requirements not met"
 		echo "More info: https://github.com/dandrewbarlow/readpdf"
@@ -102,23 +102,33 @@ done
 # check if the input file is specified and extant
 if [ "$input_file" != "" ] && [ -e "$input_file" ]
 then
-	# extract the name of the file without extension
-	name=$(echo "$input_file" | cut -f 1 -d '.')
+	# extract the name of the file and extension
+	name="$(echo "$input_file" | cut -f 1 -d '.')"
+	extension="$(echo "$input_file" | awk -F. '{print $NF}')"
 
-	# create temporary files if they are desired
 
-	temp_text="$(mktemp -t ${name}.txt)"
-	tempfiles+=( "$temp_text" )
+	# create temporary files if they are needed inside temp directory
+	temp_dir="$(mktemp -d)"
+	temp_text="${temp_dir}/text.txt)"
+	touch "$temp_text"
 
 	if [ "$convert" = true ]
 	then 
-		temp_audio="$(mktemp -t ${name}.aiff)"
-		tempfiles+=( "$temp_audio" )
+		temp_audio="$(touch ${temp_dir}/audio.aiff)"
 	fi
 
-	# convert pdf to txt
-	echo "> converting pdf"
-	gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+	# convert to txt
+	echo "> converting to txt"
+	if [ "$extension" == "pdf" ]
+	then
+		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+	elif [ "$extension" == "epub" ]
+	then
+		pandoc "$input_file" -f epub -t plain -o "$temp_text"
+	else
+		echo "Error: Unsupported Format"
+		exit 1
+	fi
 
 	# if output is true create one, else do it in place
 	# having trouble using pipes, so txt middle man might be necessary evil
