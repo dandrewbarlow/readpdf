@@ -53,6 +53,7 @@ usage() {
     echo "o (flag) output - if provided, outputs to input.aiff"
     echo "c (flag) convert - convert to mp3 using ffmpeg"
     echo "v (argument) voice - specify voice to use. Defaults to Tom."
+	echo "n (argument) install - i is already used, so this runs a simple installation script by confirming with '-n install'"
 	echo "for more information, visit https://github.com/dandrewbarlow/readpdf"
 
 }
@@ -60,22 +61,22 @@ usage() {
 # check requirements before running
 requirements
 
-# options: -i [input] -v [voice] -o -c -h 
+# options: -i [input] -v [voice] -n [install] -o -c -h
 # i : input- argument, specify input file
 # v : voice- specify voice
 # o : output- flag, not arg; create file with base filename, and write audio to it
 # c : convert- flag, if present, convert to mp3
 # h : help- display usage info
+# n : install- i is already used, so this runs a simple installation script by confirming with '-n install'. Auto-creates alias in either 
 
 # parse options and arguments given using getopts
-while getopts "ohci:v:" opt; do
+while getopts "ohci:v:n:" opt; do
 	case $opt in
 		h)
 			usage
 			exit 1
 			;;
 		i)
-			
 			if [ ! -e "$OPTARG" ]
 			then
 				echo "Error: file \"${OPTARG}\" does not exist"
@@ -92,19 +93,59 @@ while getopts "ohci:v:" opt; do
 			convert=true
 			if [ "$output_file" != true ]
 			then
-				echo "Can\'t convert without output"
+				echo "Can't convert without output"
 				exit 1
 			fi
 			;;
 		v)
-			# validate voice choice
-			if [ ! -z "$(say -v '?' | grep -i ${OPTARG})" ]
+			# validate voice choice matches one of say's voices
+			if [ "$OPTARG" == "$(say -v '?' | grep -i ${OPTARG} | awk '{print $1}')" ]
 			then
 				voice="$OPTARG"
 			else
 				echo "Error: voice not found, defaulting to 'Tom'"
 			fi
 			;;
+		n)
+			if [ "$OPTARG" == "install" ]
+			then
+				# create a ~/.scripts dir if not present
+				if [ ! -d "$HOME/.scripts/" ]
+				then
+					mkdir "$HOME/.scripts"
+				fi
+
+				# copy this script to ~/.scripts/
+				cp ./readpdf.sh "$HOME/.scripts/"
+
+				# check which shell the user is using
+				# bash & zsh are the only shells I rly know or use (and are both OSX defaults, depending on ur computer's age) so I'm only messing with them
+				# sh and fish users can figure it out themselves
+				if [[ "$SHELL" =~ "bash" ]]
+				then
+					# check if the user already has an alias for this script
+					if [ -z "$(cat $HOME/.bashrc | grep -i 'readpdf')" ]
+					then
+						# echo alias into shell config if not
+						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.bashrc"
+					fi
+				# same process as above, but for zsh
+				elif [[ "$SHELL" =~ "zsh" ]]
+				then
+					if [ -z "$(cat $HOME/.zshrc | grep -i 'readpdf')" ]
+					then
+						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.zshrc"
+					fi
+				fi
+				
+				echo "Script installed into ~/.scripts/readpdf.sh"
+				echo "Bash alias 'readpdf' has been created to access"
+				echo "Restart terminal or re-source bash config to use"
+				exit 0
+			fi
+			echo "Error, confirm installation with '-n install'"
+			exit 1
+		;;
 		*)
 			usage
 			exit 1
@@ -176,6 +217,6 @@ then
 
 else
 	echo "Error: no input file specified"
-	echo "$input_file" 
+	echo "" 
 	usage
 fi
