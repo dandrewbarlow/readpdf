@@ -16,9 +16,9 @@ Fair warning that this is not *professional* grade software, just a script I mad
 ### Usage
 `./readpdf.sh -i [input] -v [voice] [-och]`
 
-- i (argument) input - specify input file
+- i (argument) input - specify input file. Required
 
-- v (argument) voice - specify voice to use. Defaults to Tom. No real error checking here, just passing it on to `say` so check what's available.
+- v (argument) voice - specify voice to use. Defaults to Tom. Use `-v list` to see a list of English voices, or `say -v '?'` to see all voices. Additional voices can also be added from `System Preferences > Accessibility > Speech > System Voice > Customize`.
 
 - n (argument) install - running with `-n install` as a confimation will install this script into `~/.scripts`, then check for existing bash aliases, adding them if not present.
 
