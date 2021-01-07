@@ -205,19 +205,19 @@ then
 		echo "> generating audio"
 		if [ "$convert" = true ] 
 		then
-			say -v 'Tom' -f "$temp_text" -o "$temp_audio"
+			say -v "$voice" -f "$temp_text" -o "$temp_audio"
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
 			echo "> converting audio"
 			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "./${name}.mp3"
 		else
-			say -v 'Tom' -f "$temp_text" -o "./${name}.aiff"
+			say -v "$voice" -f "$temp_text" -o "./${name}.aiff"
 		fi
 
 
 	else
 		echo "> starting narration"
-		say -v 'Tom' -f "$temp_text"
+		say -v "$voice" -f "$temp_text"
 	fi
 
 else
