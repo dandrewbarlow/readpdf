@@ -47,13 +47,16 @@ requirements() {
 # in case I (or you) fuck up
 usage() {
 	echo "readpdf- use OSX's native text-to-speech programs to read pdf text"
-	echo "USAGE: ./readpdf.sh -i [input] -v [voice] [-och]"
+	echo ""
+	echo "USAGE: ./readpdf.sh -i [input] -v [voice] -n [install] [-och]"
 	echo "options: -i -o -c -h"
     echo "i (argument) input - specify input file"
+    echo "v (argument) voice - specify voice to use. Defaults to Tom."
+	echo "   See list of english voices with '-v list', or use say -v '?' to get full list."
+	echo "n (argument) install - since i is already used, this runs a simple installation script by confirming with '-n install'"
     echo "o (flag) output - if provided, outputs to input.aiff"
     echo "c (flag) convert - convert to mp3 using ffmpeg"
-    echo "v (argument) voice - specify voice to use. Defaults to Tom."
-	echo "n (argument) install - i is already used, so this runs a simple installation script by confirming with '-n install'"
+	echo ""
 	echo "for more information, visit https://github.com/dandrewbarlow/readpdf"
 
 }
@@ -63,7 +66,7 @@ requirements
 
 # options: -i [input] -v [voice] -n [install] -o -c -h
 # i : input- argument, specify input file
-# v : voice- specify voice
+# v : voice- specify voice, use -v list to list voices
 # o : output- flag, not arg; create file with base filename, and write audio to it
 # c : convert- flag, if present, convert to mp3
 # h : help- display usage info
@@ -98,6 +101,13 @@ while getopts "ohci:v:n:" opt; do
 			fi
 			;;
 		v)
+			# if argument is list, list the voices
+			if [ "$OPTARG" == "list" ]
+			then 
+				say -v '?' | grep en_US
+				exit 0
+			fi
+
 			# validate voice choice matches one of say's voices
 			if [ "$OPTARG" == "$(say -v '?' | grep -i ${OPTARG} | awk '{print $1}')" ]
 			then
@@ -131,6 +141,8 @@ while getopts "ohci:v:n:" opt; do
 					then
 						# echo alias into shell config if not
 						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.bashrc"
+						echo "Bash alias 'readpdf' has been created to access"
+						echo "Restart terminal or re-source bash config to use"
 					fi
 				# same process as above, but for zsh
 				elif [[ "$SHELL" =~ "zsh" ]]
@@ -138,14 +150,13 @@ while getopts "ohci:v:n:" opt; do
 					if [ -z "$(cat $HOME/.zshrc | grep -i 'readpdf')" ]
 					then
 						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.zshrc"
+						echo "Zsh alias 'readpdf' has been created to access"
+						echo "Restart terminal or re-source bash config to use"
 					fi
 				else
 					echo "Unknown shell, no alias created"
 				fi
 				
-				echo "Script installed into ~/.scripts/readpdf.sh"
-				echo "Bash alias 'readpdf' has been created to access"
-				echo "Restart terminal or re-source bash config to use"
 				exit 0
 			fi
 			echo "Error, confirm installation with '-n install'"
