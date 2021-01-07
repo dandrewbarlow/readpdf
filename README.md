@@ -20,12 +20,14 @@ Fair warning that this is not *professional* grade software, just a script I mad
 
 - v (argument) voice - specify voice to use. Defaults to Tom. No real error checking here, just passing it on to `say` so check what's available.
 
+- n (argument) install - running with `-n install` as a confimation will install this script into `~/.scripts`, then check for existing bash aliases, adding them if not present.
+
 - o (flag) output - if provided, outputs to input.aiff
 
 - c (flag) convert - convert to mp3 using ffmpeg
 
 ### Installation
-Seeing as this is more of a small script than a program, I'm not giving much hard advice on how to install. I like keeping a `~/.scripts/` directory and bash aliases for my scripts, but if you're interested in this script, you can probably make an educated decision on this.
+Seeing as this is more of a small script than a program, I'm not giving much hard advice on how to install. I like keeping a `~/.scripts/` directory and bash aliases for my scripts, and have included the `-n install` option to automatically do this, but if you have your own preferences (or use a shell that is not `bash` or `zsh`), you should probably figure this out yourself.
 
 ### Status
 Ostensibly working. I'd like to remove the need for the temporary text file I create in the script, but it was a good opportunity to learn about the mktemp command (here I was making temp files manually, in place like a clown). It can be pretty dang slow with large pdf's and I've encountered a few errors that I don't know how to fix (yet). I'd like to get a more general purpose version working, but it works on my computer, and I was making it for me. If anyone uses this and wants me to make changes, feel free to ask or take a swing at it yourself.

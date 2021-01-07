@@ -113,10 +113,13 @@ while getopts "ohci:v:n:" opt; do
 				if [ ! -d "$HOME/.scripts/" ]
 				then
 					mkdir "$HOME/.scripts"
+					echo "$HOME/.scripts/ directory created"
 				fi
 
 				# copy this script to ~/.scripts/
 				cp ./readpdf.sh "$HOME/.scripts/"
+
+				echo "Script copied to $HOME/.scripts/"
 
 				# check which shell the user is using
 				# bash & zsh are the only shells I rly know or use (and are both OSX defaults, depending on ur computer's age) so I'm only messing with them
@@ -136,6 +139,8 @@ while getopts "ohci:v:n:" opt; do
 					then
 						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.zshrc"
 					fi
+				else
+					echo "Unknown shell, no alias created"
 				fi
 				
 				echo "Script installed into ~/.scripts/readpdf.sh"
