@@ -94,11 +94,6 @@ while getopts "ohci:v:n:" opt; do
 			;;
 		c)
 			convert=true
-			if [ "$output_file" != true ]
-			then
-				echo "Can't convert without output"
-				exit 1
-			fi
 			;;
 		v)
 			# if argument is list, list the voices
@@ -127,7 +122,13 @@ while getopts "ohci:v:n:" opt; do
 				fi
 
 				# copy this script to ~/.scripts/
-				cp ./readpdf.sh "$HOME/.scripts/"
+				if [ -e "./readpdf.sh" ]
+				then
+					cp ./readpdf.sh "$HOME/.scripts/"
+				else
+					echo "Error: installation script must be run from same directory as script"
+					exit 1
+				fi
 
 				echo "Script copied to $HOME/.scripts/"
 
@@ -170,8 +171,6 @@ while getopts "ohci:v:n:" opt; do
 done
 
 
-
-
 # check if the input file is specified and extant
 if [ "$input_file" != "" ] && [ -e "$input_file" ]
 then
@@ -185,20 +184,21 @@ then
 	temp_text="${temp_dir}/text.txt)"
 	touch "$temp_text"
 
-	if [ "$convert" = true ]
-	then 
-		temp_audio="$(touch ${temp_dir}/audio.aiff)"
-	fi
-
 	# convert to txt
 	echo "> converting to txt"
+
 	if [ "$extension" == "pdf" ]
 	then
+
 		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+
 	elif [ "$extension" == "epub" ]
 	then
+
 		pandoc "$input_file" -f epub -t plain -o "$temp_text"
+
 	else
+
 		echo "Unsupported filetype, attempting implicit pandoc conversion"
 
 		# if implicit conversion succeeds, this command will return an empty string
@@ -213,26 +213,50 @@ then
 	# having trouble using pipes, so txt middle man might be necessary evil
 	if [ "$output_file" = true ]
 	then
+		
 		echo "> generating audio"
-		if [ "$convert" = true ] 
+
+		if [ "$convert" = true ]
 		then
-			say -v "$voice" -f "$temp_text" -o "$temp_audio"
+
+			touch "${temp_dir}/audio.aiff"
+			temp_audio="${temp_dir}/audio.aiff"
+			
+			if [ -z "$temp_audio" ]
+			then
+
+				echo "Error creating temporary file"
+				exit 1
+
+			fi
+
+			say -v "$voice" -f "$temp_text" "--output-file=$temp_audio"
+
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
+
 			echo "> converting audio"
+
 			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "./${name}.mp3"
+
 		else
+		
 			say -v "$voice" -f "$temp_text" -o "./${name}.aiff"
+
 		fi
 
 
 	else
+	
 		echo "> starting narration"
 		say -v "$voice" -f "$temp_text"
+
 	fi
 
 else
+
 	echo "Error: no input file specified"
 	echo "" 
 	usage
+
 fi
