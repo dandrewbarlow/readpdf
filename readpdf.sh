@@ -25,8 +25,8 @@ cleanup() {
 	# don't run if program exits early somewhere else
 	if [ ! -z "$temp_dir" ]
 	then
-		echo "> cleaning up temporary files"
-		rm -rf "${temp_dir}"
+		
+		rm -rf "${temp_dir}" && echo "> temporary files deleted"
 	fi
 }
 
@@ -87,7 +87,6 @@ while getopts "ohci:v:n:" opt; do
 			else
 			input_file="$OPTARG"
 			fi
-			# echo "$input_file"
 			;;
 		o)
 			output_file=true
@@ -115,22 +114,17 @@ while getopts "ohci:v:n:" opt; do
 			if [ "$OPTARG" == "install" ]
 			then
 				# create a ~/.scripts dir if not present
-				if [ ! -d "$HOME/.scripts/" ]
-				then
-					mkdir "$HOME/.scripts"
-					echo "$HOME/.scripts/ directory created"
-				fi
+				[ ! -d "$HOME/.scripts/" ] && \
+					mkdir "$HOME/.scripts" && echo "$HOME/.scripts/ directory created"
 
 				# copy this script to ~/.scripts/
 				if [ -e "./readpdf.sh" ]
 				then
-					cp ./readpdf.sh "$HOME/.scripts/"
+					cp ./readpdf.sh "$HOME/.scripts/" && echo "Script copied to $HOME/.scripts/"
 				else
 					echo "Error: installation script must be run from same directory as script"
 					exit 1
 				fi
-
-				echo "Script copied to $HOME/.scripts/"
 
 				# check which shell the user is using
 				# bash & zsh are the only shells I rly know or use (and are both OSX defaults, depending on ur computer's age) so I'm only messing with them
@@ -141,8 +135,8 @@ while getopts "ohci:v:n:" opt; do
 					if [ -z "$(cat $HOME/.bashrc | grep -i 'readpdf')" ]
 					then
 						# echo alias into shell config if not
-						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.bashrc"
-						echo "Bash alias 'readpdf' has been created to access"
+						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.bashrc" && \
+							echo "Bash alias 'readpdf' has been created to access"
 						echo "Restart terminal or re-source bash config to use"
 					fi
 				# same process as above, but for zsh
@@ -150,8 +144,8 @@ while getopts "ohci:v:n:" opt; do
 				then
 					if [ -z "$(cat $HOME/.zshrc | grep -i 'readpdf')" ]
 					then
-						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.zshrc"
-						echo "Zsh alias 'readpdf' has been created to access"
+						echo "alias readpdf=~/.scripts/readpdf.sh" >> "$HOME/.zshrc" && \
+							echo "Zsh alias 'readpdf' has been created to access"
 						echo "Restart terminal or re-source bash config to use"
 					fi
 				else
@@ -160,6 +154,7 @@ while getopts "ohci:v:n:" opt; do
 				
 				exit 0
 			fi
+
 			echo "Error, confirm installation with '-n install'"
 			exit 1
 		;;
@@ -190,23 +185,22 @@ then
 	if [ "$extension" == "pdf" ]
 	then
 
-		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file"
+		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file" || \
+			echo "Error: ghostscript conversion failed"; exit 1
 
 	elif [ "$extension" == "epub" ]
 	then
 
-		pandoc "$input_file" -f epub -t plain -o "$temp_text"
+		pandoc "$input_file" -f epub -t plain -o "$temp_text" || 
+			echo "Error: pandoc conversion failed"; exit 1
 
 	else
 
 		echo "Unsupported filetype, attempting implicit pandoc conversion"
 
-		# if implicit conversion succeeds, this command will return an empty string
-		# if if does not return a zero type (-z), then exit the script
-		if [ ! -z "$(pandoc ${input_file} -t plain -o ${temp_text})" ]
-		then
-			exit 1
-		fi
+		# attempt conversion, on fail output error message and exit
+		pandoc ${input_file} -t plain -o ${temp_text} || \ 
+			echo "Error: pandoc implicit conversion failed"; exit 1
 	fi
 
 	# if output is true create one, else do it in place
@@ -222,22 +216,20 @@ then
 			touch "${temp_dir}/audio.aiff"
 			temp_audio="${temp_dir}/audio.aiff"
 			
-			if [ -z "$temp_audio" ]
-			then
+			# check if temp audio actually exists
+			[ -z "$temp_audio" ] && \
+				echo "Error creating temporary file (audio)"; exit 1
+			
 
-				echo "Error creating temporary file"
-				exit 1
-
-			fi
-
-			say -v "$voice" -f "$temp_text" "--output-file=$temp_audio"
+			say -v "$voice" -f "$temp_text" "--output-file=$temp_audio" || \
+				echo "Error: say returned an error"; exit 1
 
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
 
 			echo "> converting audio"
-
-			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "./${name}.mp3"
+			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "./${name}.mp3" || \
+				echo "Error: ffmpeg mp3 conversion failed; Exiting program"; exit 1
 
 		else
 		
@@ -249,7 +241,7 @@ then
 	else
 	
 		echo "> starting narration"
-		say -v "$voice" -f "$temp_text"
+		say -v "$voice" -f "$temp_text" || echo "Error: say returned an error"; exit 1
 
 	fi
 
