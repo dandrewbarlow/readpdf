@@ -25,8 +25,9 @@ cleanup() {
 	# don't run if program exits early somewhere else
 	if [ ! -z "$temp_dir" ]
 	then
-		
-		rm -rf "${temp_dir}" && echo "> temporary files deleted"
+		rm -rf "${temp_dir}" && \
+			echo "> temporary files deleted" || \
+			echo "Error: error deleting temporary files"
 	fi
 }
 
@@ -184,23 +185,19 @@ then
 
 	if [ "$extension" == "pdf" ]
 	then
-
-		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file" || \
-			echo "Error: ghostscript conversion failed"; exit 1
+		gs -q -dNOPROMPT -dBATCH -dNOPAUSE -sDEVICE=txtwrite -sOutputFile="$temp_text" "$input_file" || 
+			echo "Error: ghostscript conversion failed" || exit 1
 
 	elif [ "$extension" == "epub" ]
 	then
-
 		pandoc "$input_file" -f epub -t plain -o "$temp_text" || 
-			echo "Error: pandoc conversion failed"; exit 1
+			echo "Error: pandoc conversion failed" || exit 1
 
 	else
-
 		echo "Unsupported filetype, attempting implicit pandoc conversion"
-
 		# attempt conversion, on fail output error message and exit
 		pandoc ${input_file} -t plain -o ${temp_text} || \ 
-			echo "Error: pandoc implicit conversion failed"; exit 1
+			echo "Error: pandoc implicit conversion failed" || exit 1
 	fi
 
 	# if output is true create one, else do it in place
@@ -218,22 +215,25 @@ then
 			
 			# check if temp audio actually exists
 			[ -z "$temp_audio" ] && \
-				echo "Error creating temporary file (audio)"; exit 1
+				echo "Error creating temporary file (audio)" && exit 1
 			
 
 			say -v "$voice" -f "$temp_text" "--output-file=$temp_audio" || \
-				echo "Error: say returned an error"; exit 1
+				echo "Error: say returned an error" || exit 1
 
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
 
 			echo "> converting audio"
 			ffmpeg -hide_banner -loglevel fatal -i "$temp_audio" -f mp3 -acodec libmp3lame -ab "$bit"k "./${name}.mp3" || \
-				echo "Error: ffmpeg mp3 conversion failed; Exiting program"; exit 1
+				echo "Error: ffmpeg mp3 conversion failed; Exiting program" || \
+				exit 1
 
 		else
 		
-			say -v "$voice" -f "$temp_text" -o "./${name}.aiff"
+			say -v "$voice" -f "$temp_text" -o "./${name}.aiff" || \
+				echo "Error: say returned error code" || \
+				exit 1
 
 		fi
 
@@ -241,7 +241,9 @@ then
 	else
 	
 		echo "> starting narration"
-		say -v "$voice" -f "$temp_text" || echo "Error: say returned an error"; exit 1
+		say -v "$voice" -f "$temp_text" || \
+			echo "Error: say returned an error"|| \
+			exit 1
 
 	fi
 
