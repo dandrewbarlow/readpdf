@@ -51,7 +51,7 @@ trap cleanup SIGINT
 
 # if programs in the script aren't installed, don't run the script
 requirements() {
-	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v pandoc)" ] && [ ! -x "$(command -v ffmpeg)" ] && [ ! -x "$(command -v say)"]
+	if [ ! -x "$(command -v gs)" ] && [ ! -x "$(command -v pandoc)" ] && [ ! -x "$(command -v ffmpeg)" ] && [ ! -x "$(command -v $tts)"]
 	then
 		echo "Error: requirements not met"
 		echo "More info: https://github.com/dandrewbarlow/readpdf"
