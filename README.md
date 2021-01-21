@@ -4,7 +4,7 @@ Narrate pdf (and other) files from the command line
 ### Description
 A simple script to take a pdf and narrate it. 
 
-This was written on and for my OSX computer, using OSX's native `say` command as a text to speech device. It also uses ghostscript with OSX syntax to convert a pdf to text. As of now it also uses pandoc to convert epub files, and will try to implicitly convert any [other file types](https://pandoc.org/index.html) you try to send to it. No promises, but pandoc can handle a lot of formats without tweaking (<3 that program). All of which is to say it probably *can* work on other setups, but it might require some tinkering.
+This was written on and for my OSX computer, using OSX's native `say` command as a text to speech device. As of 1/20/21, it now can use espeak as well. It also uses ghostscript to convert a pdf to text, pandoc to convert epub files, and will try to implicitly convert any [other file types](https://pandoc.org/index.html) you try to send to it. No promises, but pandoc can handle a lot of formats without tweaking (<3 that program). All of which is to say it probably *can* work on other setups, but it might require some tinkering.
 
 Fair warning that this is not *professional* grade software, just a script I made for fun. It's not perfect, has gone through very minimal testing, and comes with no warranty or guarantee of any kind. As a general rule if you can't understand the source code, don't run it. I tried to make it pretty foolproof, but underestimating fools (or assuming I'm not the fool) is also bad practice.
 
@@ -14,6 +14,7 @@ Fair warning that this is not *professional* grade software, just a script I mad
 * pandoc - available from homebrew: `$ brew install pandoc`. Allows conversion from `epub` format as well as many other formats.
 * ffmpeg - available for download from [here](http://ffmpeg.org/download.html) or again via homebrew: `$ brew install ffmpeg`. Default audio output for `say` is `.aiff`. `man say` shows that some voices have different formats, but doesn't go into much detail on how to find out more. I for one would like a nice `mp3` file without finnicking with this old ass program, so I chose to convert it with ffmpeg. ffmpeg is a notoriously cumbersome program to use, so I didn't allow much customization for conversion options. If you want a different file type, that's something you'll have to manually change.
 * say - included in OSX, replacement needed for other OS's. I wouldn't recommend that unless you are willing to mess with the code, though, because you will need to switch out say with whatever you choose.
+* espeak - alternative to say. For linux, download using your package manager of choice (or build it from scratch idgaf). Precompiled binaries are downloadable [here](http://espeak.sourceforge.net/download.html).
 
 ### Usage
 `./readpdf.sh -i [input] -v [voice] [-och]`
