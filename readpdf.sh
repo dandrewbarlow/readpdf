@@ -13,12 +13,26 @@ OPTIND=1
 input_file=""
 output_file=false
 convert=false
-voice='Tom'
+voice=''
 
 # temporary file directory and files
 temp_dir=""
 temp_text=""
 temp_audio=""
+
+# Determine tts program
+tts=""
+if [ -x "$(command -v say)" ]
+then 
+	tts="say"
+	voice='Tom'
+elif [ -x "$(command -v espeak)" ]
+then
+	tts="espeak"
+	voice='english-us'
+else
+	echo "Error: no supported text-to-speech program" && exit 1
+fi
 
 # function to clean up temp files
 cleanup() {
@@ -99,7 +113,13 @@ while getopts "ohci:v:n:" opt; do
 			# if argument is list, list the voices
 			if [ "$OPTARG" == "list" ]
 			then 
-				say -v '?' | grep en_US
+				if [ "$tts" == say ]
+				then
+					say -v '?' | grep en_US
+				elif [ "$tts" == espeak ]
+				then
+					espeak --voices | grep english
+				fi
 				exit 0
 			fi
 
@@ -200,26 +220,43 @@ then
 			echo "Error: pandoc implicit conversion failed" || exit 1
 	fi
 
-	# if output is true create one, else do it in place
-	# having trouble using pipes, so txt middle man might be necessary evil
+	# create an audio file
 	if [ "$output_file" = true ]
 	then
 		
 		echo "> generating audio"
 
+		# narrate and then compress audio file
 		if [ "$convert" = true ]
 		then
 
-			touch "${temp_dir}/audio.aiff"
-			temp_audio="${temp_dir}/audio.aiff"
-			
-			# check if temp audio actually exists
-			[ -z "$temp_audio" ] && \
-				echo "Error creating temporary file (audio)" && exit 1
-			
+			# handle different tts programs
+			if [ "$tts" == "say" ]
+			then
 
-			say -v "$voice" -f "$temp_text" "--output-file=$temp_audio" || \
-				echo "Error: say returned an error" || exit 1
+				# Create temp audio
+				touch "${temp_dir}/audio.aiff"
+				temp_audio="${temp_dir}/audio.aiff"
+				
+				# check if temp audio actually exists
+				[ -z "$temp_audio" ] && \
+				echo "Error creating temporary file (audio)" && exit 1
+
+				say -v "$voice" -f "$temp_text" "--output-file=$temp_audio" || \
+					echo "Error: say returned an error" || exit 1
+
+			elif [ "$tts" == "espeak" ]
+			then
+				# Create temp audio
+				touch "${temp_dir}/audio.wav"
+				temp_audio="${temp_dir}/audio.wav"
+				
+				# check if temp audio actually exists
+				[ -z "$temp_audio" ] && \
+				echo "Error creating temporary file (audio)" && exit 1
+				espeak -v "$voice" -f "$temp_text" -w "$temp_audio"
+
+			fi
 
 			# get the bitrate of output file and use that for equivalent conversion
 			bit="$(ffmpeg -i "${temp_audio}" 2>&1 | grep Audio | awk -F", " '{print $5}' | cut -d' ' -f1)"
@@ -229,21 +266,40 @@ then
 				echo "Error: ffmpeg mp3 conversion failed; Exiting program" || \
 				exit 1
 
+		# Narrate to uncompressed audio file
 		else
-		
-			say -v "$voice" -f "$temp_text" -o "./${name}.aiff" || \
-				echo "Error: say returned error code" || \
-				exit 1
+			if [ "$tts" == "say" ]
+			then
+				say -v "$voice" -f "$temp_text" -o "./${name}.aiff" || \
+					echo "Error: say returned error code" || \
+					exit 1
+			elif [ "$tts" == "espeak" ]
+			then
+				espeak -v "$voice" -f "$temp_text" -w "./${name}.wav" || \
+					echo "Error: espeak returned error code" || \
+					exit 1
+			fi
 
 		fi
 
 
+	# narrate from command line
 	else
+
+		if [ "$tts" == "say" ]
+			then
+				echo "> starting narration"
+				say -v "$voice" -f "$temp_text" || \
+					echo "Error: say returned an error"|| \
+					exit 1
+			elif [ "$tts" == "espeak" ]
+			then
+				espeak -v "$voice" -f "$temp_text" || \
+					echo "Error: espeak returned error code" || \
+					exit 1
+			fi
 	
-		echo "> starting narration"
-		say -v "$voice" -f "$temp_text" || \
-			echo "Error: say returned an error"|| \
-			exit 1
+		
 
 	fi
 
